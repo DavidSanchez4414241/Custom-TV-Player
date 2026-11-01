@@ -32,3 +32,6 @@ Puedes descargar la aplicación desde Releases (Salidas). Una vez que estés en 
     Desde aquí puedes importar un solo plugin de manera individual o —lo que es más recomendable— importar una carpeta entera de plugins.
 
     Para esto último, solo tienes que colocar los archivos compatibles con Streamlink (con extensión .py) dentro de una carpeta en tu dispositivo (por ejemplo, en la carpeta de descargas) y seleccionar dicha carpeta para utilizar todos tus plugins personalizados de forma unificada.
+
+Aplicaciones ThirdParty
+https://streamlink.github.io/latest/
