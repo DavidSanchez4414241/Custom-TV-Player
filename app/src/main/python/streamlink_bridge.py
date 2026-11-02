@@ -90,6 +90,24 @@ def resolve(input_url, plugin_directory=None, quality="best"):
     from streamlink import Streamlink
     session = Streamlink()
     session.set_option("http-timeout", 15)
+
+    # Set realistic browser User-Agent so Cerbero / Mediaset APIs don't block Python requests
+    session.http.headers.update({
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "Accept-Language": "es-ES,es;q=0.9",
+    })
+
+    # Remove unwanted built-in plugins so user can load them manually if desired
+    for name in ["mediasetinfinity"]:
+        try:
+            if hasattr(session, "plugins"):
+                if isinstance(session.plugins, dict):
+                    session.plugins.pop(name, None)
+                if hasattr(session.plugins, "plugins") and isinstance(session.plugins.plugins, dict):
+                    session.plugins.plugins.pop(name, None)
+        except Exception:
+            pass
+
     loaded_plugins = []
     try:
         if plugin_directory:
@@ -139,6 +157,9 @@ def resolve(input_url, plugin_directory=None, quality="best"):
                 "error": "El stream requiere stream.open() y no expone una URL reproducible por Media3",
                 "diagnostics": f"plugin={plugin_name}; streams={','.join(streams.keys())}",
             })
+
+        is_mediaset = "mediaset" in input_url.lower() or "mitele" in input_url.lower() or "mitele" in plugin_name.lower() or "mitele" in str(resolved_plugin).lower()
+
         headers = {
             str(name): str(value)
             for name, value in (getattr(selected, "headers", {}) or {}).items()
@@ -152,6 +173,12 @@ def resolve(input_url, plugin_directory=None, quality="best"):
                 for name, value in (getattr(session.http, "headers", {}) or {}).items()
                 if value is not None
             }
+
+        if is_mediaset:
+            headers["Origin"] = "https://www.mediaset.es"
+            headers["Referer"] = "https://www.mediasetinfinity.es/"
+            headers["User-Agent"] = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+
         return json.dumps({
             "ok": True,
             "url": playback_url,
@@ -161,7 +188,7 @@ def resolve(input_url, plugin_directory=None, quality="best"):
             "headers": dict(headers),
             "diagnostics": (
                 f"plugin={plugin_name}; streams={','.join(streams.keys())}; "
-                f"selected={selected.__class__.__name__}; headerKeys={','.join(headers.keys())}"
+                f"selected={selected.__class__.__name__}; headerKeys={','.join(headers.keys())}; isMediaset={is_mediaset}"
             ),
         })
     except Exception as error:
